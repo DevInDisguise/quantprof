@@ -13,9 +13,6 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
-
 <style>
 /* ── Reset ───────────────────────────────────────────────────── */
 :root {
@@ -641,52 +638,10 @@ const RAW      = JSON.parse(document.getElementById('data').textContent);
 const PROBLEMS = (RAW.problems || RAW || []).filter(p => p.type === 'question' || (!p.type && p.question));
 console.log(`Loaded ${PROBLEMS.length} problems`);
 
-// ── Solved (synced via Firebase Firestore) ────────────────────
+// ── Solved ────────────────────────────────────────────────────
 const SOLVED_KEY = 'qp_solved_v4';
 const solved     = new Set(JSON.parse(localStorage.getItem(SOLVED_KEY) || '[]'));
-
-// ── Firebase Cloud Sync ──────────────────────────────────────
-// Fill in your Firebase project config to enable cross-user sync.
-// Without config, solved state stays local (per-browser only).
-// Setup: https://console.firebase.google.com → Create project → 
-//        Add web app → Copy config → Enable Cloud Firestore (test mode)
-const FIREBASE_CONFIG = {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
-};
-
-let _db = null;
-if (FIREBASE_CONFIG.apiKey) {
-    try {
-        firebase.initializeApp(FIREBASE_CONFIG);
-        _db = firebase.firestore();
-        _db.collection('quantprof').doc('solved').onSnapshot(snap => {
-            const data = snap.exists ? snap.data() : null;
-            if (data && Array.isArray(data.ids)) {
-                const remote = new Set(data.ids);
-                const local  = [...solved].sort().join(',');
-                const rmt    = [...remote].sort().join(',');
-                if (local !== rmt) {
-                    solved.clear();
-                    data.ids.forEach(id => solved.add(id));
-                    localStorage.setItem(SOLVED_KEY, JSON.stringify([...solved]));
-                    if (typeof renderList === 'function') renderList();
-                    if (current && typeof renderDetail === 'function') renderDetail();
-                }
-            }
-        }, err => console.warn('[QP] Firestore listen error:', err));
-        console.log('[QP] Firebase sync enabled');
-    } catch (e) { console.warn('[QP] Firebase init failed:', e); }
-}
-
-const saveSolved = () => {
-    localStorage.setItem(SOLVED_KEY, JSON.stringify([...solved]));
-    if (_db) _db.collection('quantprof').doc('solved').set({ ids: [...solved], updatedAt: new Date().toISOString() }).catch(e => console.warn('[QP] Save error:', e));
-};
+const saveSolved = () => localStorage.setItem(SOLVED_KEY, JSON.stringify([...solved]));
 
 // ── Topic colours ─────────────────────────────────────────────
 const TOPIC_COLORS = {
