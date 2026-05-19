@@ -638,10 +638,22 @@ const RAW      = JSON.parse(document.getElementById('data').textContent);
 const PROBLEMS = (RAW.problems || RAW || []).filter(p => p.type === 'question' || (!p.type && p.question));
 console.log(`Loaded ${PROBLEMS.length} problems`);
 
-// ── Solved ────────────────────────────────────────────────────
+// ── Solved (localStorage + kvdb.io cloud sync) ───────────────
 const SOLVED_KEY = 'qp_solved_v4';
+const KVDB_URL   = 'https://kvdb.io/H7DNRwdvP9eg1wQJFyYWk9/solved';
 const solved     = new Set(JSON.parse(localStorage.getItem(SOLVED_KEY) || '[]'));
-const saveSolved = () => localStorage.setItem(SOLVED_KEY, JSON.stringify([...solved]));
+
+async function saveSolved() {
+    const arr = [...solved];
+    localStorage.setItem(SOLVED_KEY, JSON.stringify(arr));
+    try {
+        await fetch(KVDB_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(arr)
+        });
+    } catch(e) { /* offline — localStorage is the fallback */ }
+}
 
 // ── Topic colours ─────────────────────────────────────────────
 const TOPIC_COLORS = {
@@ -984,6 +996,24 @@ document.addEventListener('keydown', e => {
 
 // ── Init ──────────────────────────────────────────────────────
 applyFilters();
+
+// ── Cloud sync on load: pull remote solved set and merge ─────
+(async () => {
+    try {
+        const r = await fetch(KVDB_URL);
+        if (r.ok) {
+            const remote = await r.json();
+            if (Array.isArray(remote) && remote.length > 0) {
+                let changed = false;
+                remote.forEach(id => { if (!solved.has(id)) { solved.add(id); changed = true; } });
+                if (changed) {
+                    localStorage.setItem(SOLVED_KEY, JSON.stringify([...solved]));
+                    renderList();
+                }
+            }
+        }
+    } catch(e) { /* offline or bucket not yet active */ }
+})();
 </script>
 </body>
 </html>
