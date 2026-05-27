@@ -29,10 +29,10 @@
     --text:      hsl(210,40%,98%);
     --text-dim:  hsl(215,20%,65%);
     --text-faint:hsl(215,20%,38%);
-    --green:     hsl(122,97%,50%);
-    --green-dim: hsl(122,60%,55%);
-    --green-bg:  hsl(122,97%,50%/.12);
-    --green-bdr: hsl(122,97%,50%/.22);
+    --green:     hsl(258,92%,68%);
+    --green-dim: hsl(258,75%,76%);
+    --green-bg:  hsl(258,92%,68%/.12);
+    --green-bdr: hsl(258,92%,68%/.25);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { min-height: 100%; }
@@ -394,7 +394,7 @@ img { display: block; }
     transition: all .15s;
 }
 .notes-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
-.notes-btn.active { color: hsl(122,97%,50%); border-color: hsl(122,97%,55%/.35); background: hsl(122,97%,50%/.06); }
+.notes-btn.active { color: hsl(258,92%,68%); border-color: hsl(258,92%,70%/.35); background: hsl(258,92%,68%/.06); }
 .notes-btn svg { width: 16px; height: 16px; }
 
 /* Saved count in table-meta */
@@ -414,26 +414,26 @@ img { display: block; }
     transition: all .15s;
 }
 .focus-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
-.focus-btn.running { color: hsl(122,97%,55%); border-color: hsl(122,97%,55%/.35); background: hsl(122,97%,50%/.06); }
+.focus-btn.running { color: hsl(258,92%,70%); border-color: hsl(258,92%,70%/.35); background: hsl(258,92%,68%/.06); }
 .focus-btn svg { width: 16px; height: 16px; }
 .focus-btn .pulse-dot {
     position: absolute;
     top: 5px; right: 5px;
     width: 7px; height: 7px;
     border-radius: 50%;
-    background: hsl(122,97%,55%);
+    background: hsl(258,92%,70%);
     display: none;
 }
 .focus-btn.running .pulse-dot {
     display: block;
-    box-shadow: 0 0 0 0 hsl(122,97%,55%/.7);
+    box-shadow: 0 0 0 0 hsl(258,92%,70%/.7);
     animation: focus-pulse 1.6s ease-out infinite;
 }
 .focus-btn.paused .pulse-dot { display: block; background: hsl(45,90%,58%); animation: none; }
 @keyframes focus-pulse {
-    0%   { box-shadow: 0 0 0 0   hsl(122,97%,55%/.7); }
-    70%  { box-shadow: 0 0 0 8px hsl(122,97%,55%/0); }
-    100% { box-shadow: 0 0 0 0   hsl(122,97%,55%/0); }
+    0%   { box-shadow: 0 0 0 0   hsl(258,92%,70%/.7); }
+    70%  { box-shadow: 0 0 0 8px hsl(258,92%,70%/0); }
+    100% { box-shadow: 0 0 0 0   hsl(258,92%,70%/0); }
 }
 
 .focus-pop {
@@ -470,7 +470,7 @@ img { display: block; }
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-.focus-pop-status .running { color: hsl(122,97%,60%); }
+.focus-pop-status .running { color: hsl(258,92%,72%); }
 .focus-pop-status .paused  { color: hsl(45,90%,60%); }
 .focus-pop-next {
     background: var(--bg-muted);
@@ -854,11 +854,11 @@ img { display: block; }
 <nav class="navbar">
     <div class="nav-logo" onclick="showList()">
         <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="30" height="30" rx="6" fill="hsl(122,97%,50%/.12)"/>
-            <rect x="4" y="4" width="9" height="9" rx="2" fill="hsl(122,97%,50%)"/>
-            <rect x="17" y="4" width="9" height="9" rx="2" fill="hsl(122,97%,50%/.4)"/>
-            <rect x="4" y="17" width="9" height="9" rx="2" fill="hsl(122,97%,50%/.4)"/>
-            <rect x="17" y="17" width="9" height="9" rx="2" fill="hsl(122,97%,50%)"/>
+            <rect width="30" height="30" rx="6" fill="hsl(258,92%,68%/.12)"/>
+            <rect x="4" y="4" width="9" height="9" rx="2" fill="hsl(258,92%,68%)"/>
+            <rect x="17" y="4" width="9" height="9" rx="2" fill="hsl(258,92%,68%/.4)"/>
+            <rect x="4" y="17" width="9" height="9" rx="2" fill="hsl(258,92%,68%/.4)"/>
+            <rect x="17" y="17" width="9" height="9" rx="2" fill="hsl(258,92%,68%)"/>
         </svg>
         <span class="nav-logo-text">QuantDeck</span>
     </div>
