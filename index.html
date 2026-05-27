@@ -252,6 +252,91 @@ img { display: block; }
     font-size: 15px;
 }
 
+/* Status filter pills */
+.status-pills {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+.status-pill {
+    padding: 7px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.status-pill:hover { border-color: var(--text-faint); color: var(--text); }
+.status-pill.active { background: var(--bg-muted); color: var(--text); border-color: var(--text-faint); }
+
+/* Bookmark in table */
+.td-bookmark { width: 36px; text-align: center; padding-left: 4px !important; padding-right: 0 !important; }
+.bm-icon {
+    width: 18px; height: 18px;
+    color: var(--text-faint);
+    opacity: 0.25;
+    cursor: pointer;
+    transition: all .15s;
+    vertical-align: middle;
+}
+.bm-icon:hover { opacity: 0.6; }
+.bm-icon.saved { opacity: 1; color: hsl(45,93%,58%); }
+
+/* Save button (detail) */
+.save-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+}
+.save-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
+.save-btn.saved { color: hsl(45,93%,58%); border-color: hsl(45,93%,58%/.3); }
+.save-btn svg { width: 16px; height: 16px; }
+
+/* Notes pane */
+.notes-pane { padding-top: 4px; }
+.notes-area {
+    width: 100%;
+    min-height: 220px;
+    padding: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.75;
+    resize: vertical;
+    transition: border-color .15s;
+}
+.notes-area:focus { outline: none; border-color: var(--green); }
+.notes-area::placeholder { color: var(--text-faint); }
+.notes-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+.notes-saved {
+    font-size: 12px;
+    color: var(--green-dim);
+    opacity: 0;
+    transition: opacity .3s;
+}
+.notes-saved.show { opacity: 1; }
+.notes-count { font-size: 12px; color: var(--text-faint); }
+
+/* Saved count in table-meta */
+.saved-ct { color: hsl(45,90%,58%); font-weight: 600; }
+
 /* ── DETAIL VIEW ─────────────────────────────────────────────── */
 #detail-view {
     display: none;
@@ -514,6 +599,7 @@ img { display: block; }
     .prob-title { font-size: 20px; }
     .answer-row { flex-direction: column; }
     .submit-btn { width: 100%; justify-content: center; padding: 14px; }
+    .status-pills { flex-wrap: wrap; }
 }
 @media (max-width: 520px) {
     .tab-row { flex-wrap: wrap; }
@@ -554,9 +640,18 @@ img { display: block; }
         </div>
     </div>
 
+    <div class="status-pills">
+        <button class="status-pill active" data-status="all" onclick="setStatus('all')">All</button>
+        <button class="status-pill" data-status="saved" onclick="setStatus('saved')">Saved</button>
+        <button class="status-pill" data-status="unsolved" onclick="setStatus('unsolved')">Unsolved</button>
+    </div>
+
     <div class="table-meta">
         <span id="n-shown">0 problems</span>
-        <span class="solved-ct"><span id="n-solved">0</span> solved</span>
+        <span style="display:flex;gap:16px">
+            <span class="saved-ct"><span id="n-saved">0</span> saved</span>
+            <span class="solved-ct"><span id="n-solved">0</span> solved</span>
+        </span>
     </div>
 
     <div class="table-wrap">
@@ -564,6 +659,7 @@ img { display: block; }
             <thead>
                 <tr>
                     <th>#</th>
+                    <th class="hide-sm" style="width:36px"></th>
                     <th>Title</th>
                     <th class="hide-sm">Topic</th>
                     <th class="hide-sm">Difficulty</th>
@@ -606,9 +702,15 @@ img { display: block; }
             <div class="tab-switch">
                 <button class="tab-btn active" id="tab-prob" onclick="switchTab('problem')">Problem</button>
                 <button class="tab-btn"         id="tab-sol"  onclick="switchTab('solution')">Solution</button>
+                <button class="tab-btn"         id="tab-notes" onclick="switchTab('notes')">Notes</button>
             </div>
             <div class="tab-right">
                 <span class="level-pill" id="level-pill"></span>
+                <button class="save-btn" id="save-btn" title="Save for later" onclick="toggleSave()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+                    </svg>
+                </button>
                 <button class="share-btn" title="Share" onclick="shareProb()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
@@ -628,6 +730,16 @@ img { display: block; }
 
         <div id="pane-solution" style="display:none">
             <div class="sol-section" id="d-hints-sols"></div>
+        </div>
+
+        <div id="pane-notes" style="display:none">
+            <div class="notes-pane">
+                <textarea class="notes-area" id="notes-area" placeholder="Write your notes here..."></textarea>
+                <div class="notes-meta">
+                    <span class="notes-saved" id="notes-saved">Saved</span>
+                    <span class="notes-count" id="notes-count"></span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -657,6 +769,14 @@ async function saveSolved() {
         });
     } catch(e) { /* offline — localStorage is the fallback */ }
 }
+
+const SAVED_KEY  = 'qp_saved_v1';
+const savedQs    = new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'));
+const saveSavedQs = () => localStorage.setItem(SAVED_KEY, JSON.stringify([...savedQs]));
+
+const NOTES_KEY  = 'qp_notes_v1';
+const allNotes   = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
+const saveNotes  = () => localStorage.setItem(NOTES_KEY, JSON.stringify(allNotes));
 
 // ── Topic colours ─────────────────────────────────────────────
 const TOPIC_COLORS = {
@@ -697,6 +817,7 @@ let curPage  = 1;
 let filtered = [...PROBLEMS];
 let current  = null;
 let curTab   = 'problem';
+let statusFilter = 'all';
 
 // ── Populate selects ──────────────────────────────────────────
 const topicSel = document.getElementById('f-topic');
@@ -718,11 +839,20 @@ const applyFilters = () => {
         if (q && !['title','normalisedTitle','normalizedTitle'].some(k => (p[k]||'').toLowerCase().includes(q))) return false;
         if (tp && p.topic !== tp) return false;
         if (lv && String(p.level) !== lv) return false;
+        if (statusFilter === 'saved'    && !savedQs.has(p._id)) return false;
+        if (statusFilter === 'unsolved' &&  solved.has(p._id))  return false;
         return true;
     });
     curPage = 1;
     renderList();
 };
+
+function setStatus(s) {
+    statusFilter = s;
+    document.querySelectorAll('.status-pill').forEach(b =>
+        b.classList.toggle('active', b.dataset.status === s));
+    applyFilters();
+}
 
 document.getElementById('f-search').addEventListener('input', applyFilters);
 topicSel.addEventListener('change', applyFilters);
@@ -754,17 +884,21 @@ const renderList = () => {
 
     document.getElementById('n-shown').textContent = `${filtered.length} problem${filtered.length === 1 ? '' : 's'}`;
     document.getElementById('n-solved').textContent = solved.size;
+    document.getElementById('n-saved').textContent  = savedQs.size;
 
     tbody.innerHTML = '';
     if (!filtered.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="tbl-empty">No problems match your filters.</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7"><div class="tbl-empty">No problems match your filters.</div></td></tr>`;
         paginEl.innerHTML = '';
         return;
     }
 
+    const SVG_BM = (on) => `<svg class="bm-icon${on?' saved':''}" viewBox="0 0 24 24" width="18" height="18" fill="${on?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>`;
+
     const frag = document.createDocumentFragment();
     for (const p of page) {
         const isSolved = solved.has(p._id);
+        const isSavedQ = savedQs.has(p._id);
         const tc       = topicColor(p.topic);
         const logos    = (p.askedIn || []).filter(c => c.logoURL).slice(0, 5);
 
@@ -786,10 +920,24 @@ const renderList = () => {
                     ? `<div class="co-row">${logos.map(c => `<img class="co-logo" src="${esc(c.logoURL)}" alt="${esc(c.name||'')}" onerror="this.style.display='none'">`).join('')}</div>`
                     : `<span class="co-dash">—</span>`}
             </td>
+            <td class="td-bookmark hide-sm">${SVG_BM(isSavedQ)}</td>
             <td class="td-status">
                 <span class="status-icon${isSolved ? ' done' : ''}">${isSolved ? SVG_CHECK : ''}</span>
             </td>`;
-        tr.addEventListener('click', () => openProblem(p));
+        tr.addEventListener('click', (e) => {
+            if (e.target.closest('.bm-icon')) {
+                e.stopPropagation();
+                if (savedQs.has(p._id)) savedQs.delete(p._id); else savedQs.add(p._id);
+                saveSavedQs();
+                const icon = e.target.closest('.bm-icon');
+                const on = savedQs.has(p._id);
+                icon.classList.toggle('saved', on);
+                icon.setAttribute('fill', on ? 'currentColor' : 'none');
+                document.getElementById('n-saved').textContent = savedQs.size;
+                return;
+            }
+            openProblem(p);
+        });
         frag.appendChild(tr);
     }
     tbody.appendChild(frag);
@@ -942,6 +1090,12 @@ const renderDetail = () => {
     hints.forEach((h,i) => hs.appendChild(makeCard(`Hint ${i+1}`, rich(h), true)));
     sols.forEach((s,i)  => hs.appendChild(makeCard(sols.length>1?`Solution ${i+1}`:'Solution', rich(s), false)));
 
+    // Save button state
+    const isSavedNow = savedQs.has(p._id);
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.classList.toggle('saved', isSavedNow);
+    saveBtn.querySelector('svg').setAttribute('fill', isSavedNow ? 'currentColor' : 'none');
+
     switchTab('problem');
 };
 
@@ -950,10 +1104,55 @@ const switchTab = (tab) => {
     curTab = tab;
     document.getElementById('tab-prob').classList.toggle('active', tab === 'problem');
     document.getElementById('tab-sol').classList.toggle('active',  tab === 'solution');
+    document.getElementById('tab-notes').classList.toggle('active', tab === 'notes');
     document.getElementById('pane-problem').style.display  = tab === 'problem'  ? '' : 'none';
     document.getElementById('pane-solution').style.display = tab === 'solution' ? '' : 'none';
-    renderMath(document.getElementById(tab === 'problem' ? 'pane-problem' : 'pane-solution'));
+    document.getElementById('pane-notes').style.display    = tab === 'notes'    ? '' : 'none';
+    if (tab === 'notes') loadNotes();
+    else renderMath(document.getElementById(tab === 'problem' ? 'pane-problem' : 'pane-solution'));
 };
+
+// ── Save / Bookmark ──────────────────────────────────────────
+function toggleSave() {
+    if (!current) return;
+    const id = current._id;
+    if (savedQs.has(id)) savedQs.delete(id); else savedQs.add(id);
+    saveSavedQs();
+    const btn = document.getElementById('save-btn');
+    const on  = savedQs.has(id);
+    btn.classList.toggle('saved', on);
+    btn.querySelector('svg').setAttribute('fill', on ? 'currentColor' : 'none');
+    document.getElementById('n-saved').textContent = savedQs.size;
+}
+
+// ── Notes ────────────────────────────────────────────────────
+function loadNotes() {
+    if (!current) return;
+    const area = document.getElementById('notes-area');
+    area.value = allNotes[current._id] || '';
+    updateNotesCount();
+    document.querySelector('.notes-saved').style.opacity = '0';
+}
+function updateNotesCount() {
+    const area = document.getElementById('notes-area');
+    document.getElementById('notes-count').textContent = `${area.value.length} chars`;
+}
+(() => {
+    let debounce;
+    document.getElementById('notes-area').addEventListener('input', () => {
+        if (!current) return;
+        updateNotesCount();
+        clearTimeout(debounce);
+        debounce = setTimeout(() => {
+            const v = document.getElementById('notes-area').value;
+            if (v) allNotes[current._id] = v; else delete allNotes[current._id];
+            saveNotes();
+            const s = document.querySelector('.notes-saved');
+            s.style.opacity = '1';
+            setTimeout(() => s.style.opacity = '0', 1500);
+        }, 400);
+    });
+})();
 
 // ── Navigate ─────────────────────────────────────────────────
 const navigate = (dir) => {
@@ -986,7 +1185,7 @@ const shareProb = () => {
 
 // ── Keyboard shortcuts ────────────────────────────────────────
 document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
     if (!current) {
         if (e.key === '/') { e.preventDefault(); document.getElementById('f-search').focus(); }
         return;
@@ -994,7 +1193,11 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft'  || e.key === 'h') navigate(-1);
     if (e.key === 'ArrowRight' || e.key === 'l') navigate(1);
     if (e.key === 'Escape') showList();
-    if (e.key === 'Tab') { e.preventDefault(); switchTab(curTab === 'problem' ? 'solution' : 'problem'); }
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const tabs = ['problem','solution','notes'];
+        switchTab(tabs[(tabs.indexOf(curTab) + 1) % 3]);
+    }
 });
 
 // ── Init ──────────────────────────────────────────────────────
