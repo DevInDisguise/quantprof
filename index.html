@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>QuantProf</title>
+<title>QuantDeck</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -619,7 +619,7 @@ img { display: block; }
             <rect x="4" y="17" width="9" height="9" rx="2" fill="hsl(122,97%,50%/.4)"/>
             <rect x="17" y="17" width="9" height="9" rx="2" fill="hsl(122,97%,50%)"/>
         </svg>
-        <span class="nav-logo-text">QuantProf</span>
+        <span class="nav-logo-text">QuantDeck</span>
     </div>
 </nav>
 
@@ -771,12 +771,35 @@ async function saveSolved() {
 }
 
 const SAVED_KEY  = 'qp_saved_v1';
+const KVDB_SAVED = 'https://kvdb.io/H7DNRwdvP9eg1wQJFyYWk9/saved';
 const savedQs    = new Set(JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'));
-const saveSavedQs = () => localStorage.setItem(SAVED_KEY, JSON.stringify([...savedQs]));
+
+async function saveSavedQs() {
+    const arr = [...savedQs];
+    localStorage.setItem(SAVED_KEY, JSON.stringify(arr));
+    try {
+        await fetch(KVDB_SAVED, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(arr)
+        });
+    } catch(e) {}
+}
 
 const NOTES_KEY  = 'qp_notes_v1';
+const KVDB_NOTES = 'https://kvdb.io/H7DNRwdvP9eg1wQJFyYWk9/notes';
 const allNotes   = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
-const saveNotes  = () => localStorage.setItem(NOTES_KEY, JSON.stringify(allNotes));
+
+async function saveNotes() {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(allNotes));
+    try {
+        await fetch(KVDB_NOTES, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(allNotes)
+        });
+    } catch(e) {}
+}
 
 // ── Topic colours ─────────────────────────────────────────────
 const TOPIC_COLORS = {
@@ -1180,7 +1203,7 @@ const renderMath = (el) => {
 
 // ── Share ─────────────────────────────────────────────────────
 const shareProb = () => {
-    if (current && navigator.clipboard) navigator.clipboard.writeText(current.title + ' — QuantProf');
+    if (current && navigator.clipboard) navigator.clipboard.writeText(current.title + ' — QuantDeck');
 };
 
 // ── Keyboard shortcuts ────────────────────────────────────────
@@ -1205,36 +1228,65 @@ applyFilters();
 
 // ── Cloud sync on load: bidirectional merge ─────────────────
 (async () => {
-    try {
-        const r = await fetch(KVDB_URL);
-        let remoteIds = [];
-        if (r.ok) {
-            const data = await r.json();
-            if (Array.isArray(data)) remoteIds = data;
-        }
-
-        // Pull: add any remote IDs not yet local
-        let localChanged = false;
-        remoteIds.forEach(id => {
-            if (!solved.has(id)) { solved.add(id); localChanged = true; }
-        });
-
-        // Push: if local had IDs not in remote, upload the merged set
-        const remoteSet = new Set(remoteIds);
-        const needsPush = [...solved].some(id => !remoteSet.has(id));
-
-        if (localChanged) {
-            localStorage.setItem(SOLVED_KEY, JSON.stringify([...solved]));
-            renderList();
-        }
-        if (needsPush) {
-            await fetch(KVDB_URL, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify([...solved])
+    async function syncSet(localSet, storageKey, kvdbUrl) {
+        try {
+            const r = await fetch(kvdbUrl);
+            let remoteIds = [];
+            if (r.ok) {
+                const data = await r.json();
+                if (Array.isArray(data)) remoteIds = data;
+            }
+            let localChanged = false;
+            remoteIds.forEach(id => {
+                if (!localSet.has(id)) { localSet.add(id); localChanged = true; }
             });
-        }
-    } catch(e) { /* offline — localStorage is the fallback */ }
+            const remoteSet = new Set(remoteIds);
+            const needsPush = [...localSet].some(id => !remoteSet.has(id));
+            if (localChanged) localStorage.setItem(storageKey, JSON.stringify([...localSet]));
+            if (needsPush) {
+                await fetch(kvdbUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([...localSet])
+                });
+            }
+            return localChanged;
+        } catch(e) { return false; }
+    }
+
+    async function syncObj(localObj, storageKey, kvdbUrl) {
+        try {
+            const r = await fetch(kvdbUrl);
+            let remoteObj = {};
+            if (r.ok) {
+                const data = await r.json();
+                if (data && typeof data === 'object') remoteObj = data;
+            }
+            let localChanged = false;
+            for (const [id, note] of Object.entries(remoteObj)) {
+                if (!localObj[id] || note.length > (localObj[id] || '').length) {
+                    localObj[id] = note; localChanged = true;
+                }
+            }
+            const needsPush = Object.keys(localObj).some(id => !remoteObj[id] || localObj[id] !== remoteObj[id]);
+            if (localChanged) localStorage.setItem(storageKey, JSON.stringify(localObj));
+            if (needsPush) {
+                await fetch(kvdbUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(localObj)
+                });
+            }
+            return localChanged;
+        } catch(e) { return false; }
+    }
+
+    const [solvedChanged, savedChanged] = await Promise.all([
+        syncSet(solved, SOLVED_KEY, KVDB_URL),
+        syncSet(savedQs, SAVED_KEY, KVDB_SAVED),
+        syncObj(allNotes, NOTES_KEY, KVDB_NOTES)
+    ]);
+    if (solvedChanged || savedChanged) renderList();
 })();
 </script>
 </body>
