@@ -301,21 +301,22 @@ img { display: block; }
 .save-btn.saved { color: hsl(45,93%,58%); border-color: hsl(45,93%,58%/.3); }
 .save-btn svg { width: 16px; height: 16px; }
 
-/* Notes pane */
-.notes-pane { padding-top: 4px; }
+/* Notes split-pane (sidebar) */
 .notes-area {
     width: 100%;
+    flex: 1;
     min-height: 220px;
-    padding: 18px;
-    background: var(--bg-card);
+    padding: 16px;
+    background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 10px;
     color: var(--text);
     font-family: inherit;
-    font-size: 15px;
-    line-height: 1.75;
-    resize: vertical;
+    font-size: 14.5px;
+    line-height: 1.7;
+    resize: none;
     transition: border-color .15s;
+    box-sizing: border-box;
 }
 .notes-area:focus { outline: none; border-color: var(--green); }
 .notes-area::placeholder { color: var(--text-faint); }
@@ -334,8 +335,236 @@ img { display: block; }
 .notes-saved.show { opacity: 1; }
 .notes-count { font-size: 12px; color: var(--text-faint); }
 
+.notes-side-pane {
+    flex-shrink: 0;
+    width: 0;
+    overflow: hidden;
+    background: var(--bg-card);
+    border-left: 1px solid transparent;
+    transition: width .25s ease, border-color .25s ease;
+    position: sticky;
+    top: 60px;
+    align-self: flex-start;
+    height: calc(100vh - 60px);
+}
+.notes-side-pane.open { width: 380px; border-left-color: var(--border); }
+.notes-side-inner {
+    width: 380px;
+    height: 100%;
+    padding: 22px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+.notes-side-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.notes-side-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: .2px;
+    text-transform: uppercase;
+}
+.notes-side-close {
+    background: transparent;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .12s;
+}
+.notes-side-close:hover { color: var(--text); background: var(--bg-muted); }
+.notes-side-close svg { width: 14px; height: 14px; }
+
+/* Notes toggle button (in tab-right) */
+.notes-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+}
+.notes-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
+.notes-btn.active { color: hsl(122,97%,50%); border-color: hsl(122,97%,55%/.35); background: hsl(122,97%,50%/.06); }
+.notes-btn svg { width: 16px; height: 16px; }
+
 /* Saved count in table-meta */
 .saved-ct { color: hsl(45,90%,58%); font-weight: 600; }
+
+/* ── FOCUS MODE ─────────────────────────────────────────────── */
+.focus-wrap { position: relative; }
+.focus-btn {
+    position: relative;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-faint);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+}
+.focus-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
+.focus-btn.running { color: hsl(122,97%,55%); border-color: hsl(122,97%,55%/.35); background: hsl(122,97%,50%/.06); }
+.focus-btn svg { width: 16px; height: 16px; }
+.focus-btn .pulse-dot {
+    position: absolute;
+    top: 5px; right: 5px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: hsl(122,97%,55%);
+    display: none;
+}
+.focus-btn.running .pulse-dot {
+    display: block;
+    box-shadow: 0 0 0 0 hsl(122,97%,55%/.7);
+    animation: focus-pulse 1.6s ease-out infinite;
+}
+.focus-btn.paused .pulse-dot { display: block; background: hsl(45,90%,58%); animation: none; }
+@keyframes focus-pulse {
+    0%   { box-shadow: 0 0 0 0   hsl(122,97%,55%/.7); }
+    70%  { box-shadow: 0 0 0 8px hsl(122,97%,55%/0); }
+    100% { box-shadow: 0 0 0 0   hsl(122,97%,55%/0); }
+}
+
+.focus-pop {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 320px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 14px 38px rgba(0,0,0,.5);
+    z-index: 60;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+}
+.focus-pop.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.focus-pop-time {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.5px;
+    text-align: center;
+    line-height: 1.1;
+}
+.focus-pop-status {
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: center;
+    margin: 4px 0 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.focus-pop-status .running { color: hsl(122,97%,60%); }
+.focus-pop-status .paused  { color: hsl(45,90%,60%); }
+.focus-pop-next {
+    background: var(--bg-muted);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.focus-pop-next strong { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.focus-pop-actions { display: flex; gap: 6px; margin-bottom: 14px; }
+.focus-pop-actions button {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .12s;
+}
+.focus-pop-actions button:hover { background: var(--bg-muted); color: var(--text); }
+.focus-pop-actions button.primary {
+    background: var(--green); color: hsl(220,13%,8%);
+    border-color: var(--green); font-weight: 700;
+}
+.focus-pop-actions button.primary:hover { opacity: .9; background: var(--green); color: hsl(220,13%,8%); }
+.focus-pop-tl-title {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+}
+.focus-pop-timeline { display: flex; flex-direction: column; gap: 2px; }
+.focus-pop-tl-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    gap: 10px;
+}
+.focus-pop-tl-row .lbl { color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+.focus-pop-tl-row .lbl svg { width: 11px; height: 11px; opacity: .6; }
+.focus-pop-tl-row.unlocked .lbl { color: var(--green-dim); }
+.focus-pop-tl-row.unlocked .lbl svg { display: none; }
+.focus-pop-tl-row .right { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.focus-pop-tl-row .unlock-now {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-decoration: underline;
+    opacity: .65;
+}
+.focus-pop-tl-row .unlock-now:hover { color: var(--text); opacity: 1; }
+.focus-pop-tl-row.unlocked .right { color: var(--green-dim); font-weight: 600; font-size: 11px; }
+
+/* Locked hint/solution cards */
+.coll-card.locked .coll-body { display: none !important; }
+.coll-card.locked .coll-head { cursor: default; opacity: .85; }
+.coll-card.locked .coll-head:hover { background: transparent; }
+.coll-card.locked .coll-chev { display: none; }
+.coll-card.locked .coll-label { display: flex; align-items: center; gap: 8px; }
+.lock-meta {
+    font-size: 12px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+}
+.lock-unlock {
+    margin-left: 10px;
+    padding: 4px 11px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .12s;
+}
+.lock-unlock:hover { background: var(--bg-muted); color: var(--text); border-color: var(--bg-accent); }
+
+/* Detail shell (for split-pane) */
+.detail-shell {
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+    width: 100%;
+}
+.detail-shell > .detail-content { flex: 1; min-width: 0; }
 
 /* ── DETAIL VIEW ─────────────────────────────────────────────── */
 #detail-view {
@@ -600,10 +829,22 @@ img { display: block; }
     .answer-row { flex-direction: column; }
     .submit-btn { width: 100%; justify-content: center; padding: 14px; }
     .status-pills { flex-wrap: wrap; }
+    .focus-pop { width: min(320px, calc(100vw - 40px)); right: -8px; }
+    .notes-side-pane {
+        position: fixed;
+        top: 60px; right: 0; bottom: 0;
+        height: auto;
+        z-index: 40;
+        box-shadow: -8px 0 28px rgba(0,0,0,.45);
+    }
+    .notes-side-pane.open { width: 100%; max-width: 380px; }
+    .notes-side-inner { width: 100%; }
 }
 @media (max-width: 520px) {
     .tab-row { flex-wrap: wrap; }
     .tab-right { margin-left: 0; }
+    .notes-side-pane.open { max-width: 100%; }
+    .notes-side-inner { width: 100vw; }
 }
 </style>
 </head>
@@ -697,15 +938,44 @@ img { display: block; }
         </div>
     </div>
 
+    <div class="detail-shell">
     <div class="detail-content">
         <div class="tab-row">
             <div class="tab-switch">
                 <button class="tab-btn active" id="tab-prob" onclick="switchTab('problem')">Problem</button>
                 <button class="tab-btn"         id="tab-sol"  onclick="switchTab('solution')">Solution</button>
-                <button class="tab-btn"         id="tab-notes" onclick="switchTab('notes')">Notes</button>
             </div>
             <div class="tab-right">
                 <span class="level-pill" id="level-pill"></span>
+                <div class="focus-wrap">
+                    <button class="focus-btn" id="focus-btn" title="Focus mode" onclick="event.stopPropagation();toggleFocusPop()">
+                        <span class="pulse-dot"></span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="9"/>
+                            <polyline points="12 7 12 12 15.5 14"/>
+                        </svg>
+                    </button>
+                    <div class="focus-pop" id="focus-pop">
+                        <div class="focus-pop-time" id="focus-time">00:00</div>
+                        <div class="focus-pop-status" id="focus-status">Off</div>
+                        <div class="focus-pop-next" id="focus-next" style="display:none"></div>
+                        <div class="focus-pop-actions">
+                            <button id="focus-primary" class="primary" onclick="focusPrimary()">Start</button>
+                            <button id="focus-reset" onclick="focusReset()">Reset</button>
+                            <button id="focus-stop" onclick="focusStop()" style="display:none">Stop</button>
+                        </div>
+                        <div class="focus-pop-tl-title">Unlock schedule</div>
+                        <div class="focus-pop-timeline" id="focus-timeline"></div>
+                    </div>
+                </div>
+                <button class="notes-btn" id="notes-btn" title="Notes" onclick="toggleNotesPane()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="9" y1="13" x2="15" y2="13"/>
+                        <line x1="9" y1="17" x2="13" y2="17"/>
+                    </svg>
+                </button>
                 <button class="save-btn" id="save-btn" title="Save for later" onclick="toggleSave()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
@@ -731,16 +1001,26 @@ img { display: block; }
         <div id="pane-solution" style="display:none">
             <div class="sol-section" id="d-hints-sols"></div>
         </div>
+    </div>
 
-        <div id="pane-notes" style="display:none">
-            <div class="notes-pane">
-                <textarea class="notes-area" id="notes-area" placeholder="Write your notes here..."></textarea>
-                <div class="notes-meta">
-                    <span class="notes-saved" id="notes-saved">Saved</span>
-                    <span class="notes-count" id="notes-count"></span>
-                </div>
+    <aside class="notes-side-pane" id="notes-side">
+        <div class="notes-side-inner">
+            <div class="notes-side-header">
+                <span class="notes-side-title">Notes</span>
+                <button class="notes-side-close" onclick="toggleNotesPane()" title="Close notes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6"  y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <textarea class="notes-area" id="notes-area" placeholder="Write your notes here…"></textarea>
+            <div class="notes-meta">
+                <span class="notes-saved" id="notes-saved">Saved</span>
+                <span class="notes-count" id="notes-count"></span>
             </div>
         </div>
+    </aside>
     </div>
 </div>
 
@@ -1095,29 +1375,42 @@ const renderDetail = () => {
     const hints = [p.hint1,p.hint2,p.hint3,p.hint4,p.hint5].filter(h=>h&&h.trim());
     const sols  = [p.solution,p.solution2,p.solution3].filter(s=>s&&s.trim());
 
-    const makeCard = (label, html, isHint) => {
+    const makeCard = (label, html, isHint, kind, idx) => {
         const d = document.createElement('div');
         d.className = 'coll-card';
+        d.dataset.kind = kind;
+        d.dataset.idx  = String(idx);
         d.innerHTML = `
             <div class="coll-head">
                 <span class="coll-label${isHint?' hint-lbl':''}">${label}</span>
+                <span class="lock-meta" style="display:none"></span>
+                <button class="lock-unlock" style="display:none" onclick="event.stopPropagation();focusUnlockNow('${kind}',${idx})">unlock now</button>
                 <svg class="coll-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             <div class="coll-body">${html}</div>`;
         d.querySelector('.coll-head').addEventListener('click', () => {
+            if (d.classList.contains('locked')) return;
             d.classList.toggle('open');
             if (d.classList.contains('open')) renderMath(d);
         });
         return d;
     };
-    hints.forEach((h,i) => hs.appendChild(makeCard(`Hint ${i+1}`, rich(h), true)));
-    sols.forEach((s,i)  => hs.appendChild(makeCard(sols.length>1?`Solution ${i+1}`:'Solution', rich(s), false)));
+    hints.forEach((h,i) => hs.appendChild(makeCard(`Hint ${i+1}`, rich(h), true,  'hint', i)));
+    sols.forEach((s,i)  => hs.appendChild(makeCard(sols.length>1?`Solution ${i+1}`:'Solution', rich(s), false, 'sol', i)));
 
     // Save button state
     const isSavedNow = savedQs.has(p._id);
     const saveBtn = document.getElementById('save-btn');
     saveBtn.classList.toggle('saved', isSavedNow);
     saveBtn.querySelector('svg').setAttribute('fill', isSavedNow ? 'currentColor' : 'none');
+
+    // If notes pane is open, load the new problem's notes
+    if (document.getElementById('notes-side').classList.contains('open')) loadNotes();
+
+    // Focus mode: reset timer per problem, keep mode state
+    if (focusState.on) focusResetTimer();
+    updateFocusUI();
+    rerenderHintLocks();
 
     switchTab('problem');
 };
@@ -1127,12 +1420,9 @@ const switchTab = (tab) => {
     curTab = tab;
     document.getElementById('tab-prob').classList.toggle('active', tab === 'problem');
     document.getElementById('tab-sol').classList.toggle('active',  tab === 'solution');
-    document.getElementById('tab-notes').classList.toggle('active', tab === 'notes');
     document.getElementById('pane-problem').style.display  = tab === 'problem'  ? '' : 'none';
     document.getElementById('pane-solution').style.display = tab === 'solution' ? '' : 'none';
-    document.getElementById('pane-notes').style.display    = tab === 'notes'    ? '' : 'none';
-    if (tab === 'notes') loadNotes();
-    else renderMath(document.getElementById(tab === 'problem' ? 'pane-problem' : 'pane-solution'));
+    renderMath(document.getElementById(tab === 'problem' ? 'pane-problem' : 'pane-solution'));
 };
 
 // ── Save / Bookmark ──────────────────────────────────────────
@@ -1148,7 +1438,18 @@ function toggleSave() {
     document.getElementById('n-saved').textContent = savedQs.size;
 }
 
-// ── Notes ────────────────────────────────────────────────────
+// ── Notes (split-pane) ───────────────────────────────────────
+function toggleNotesPane() {
+    const pane = document.getElementById('notes-side');
+    const btn  = document.getElementById('notes-btn');
+    const willOpen = !pane.classList.contains('open');
+    pane.classList.toggle('open', willOpen);
+    btn.classList.toggle('active', willOpen);
+    if (willOpen) {
+        loadNotes();
+        setTimeout(() => document.getElementById('notes-area').focus(), 260);
+    }
+}
 function loadNotes() {
     if (!current) return;
     const area = document.getElementById('notes-area');
@@ -1176,6 +1477,206 @@ function updateNotesCount() {
         }, 400);
     });
 })();
+
+// ── Focus Mode ───────────────────────────────────────────────
+const focusState = {
+    on: false,
+    startedAt: 0,
+    pausedAt: 0,
+    accumulatedPausedMs: 0,
+    unlockedExtra: new Set()
+};
+let focusTickInterval = null;
+
+function focusFmt(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function focusElapsedMs() {
+    if (!focusState.on) return 0;
+    const now = Date.now();
+    const pausedNow = focusState.pausedAt ? (now - focusState.pausedAt) : 0;
+    return now - focusState.startedAt - focusState.accumulatedPausedMs - pausedNow;
+}
+function focusSchedule(p) {
+    if (!p) return [];
+    const hintsN = [p.hint1,p.hint2,p.hint3,p.hint4,p.hint5].filter(h=>h&&h.trim()).length;
+    const solsN  = [p.solution,p.solution2,p.solution3].filter(s=>s&&s.trim()).length;
+    const items = [];
+    for (let i = 0; i < hintsN; i++) {
+        items.push({ kind:'hint', idx:i, label:`Hint ${i+1}`, unlockAt:(10 + i*5)*60*1000 });
+    }
+    if (solsN > 0) {
+        const solAt = hintsN > 0 ? (10 + hintsN*5)*60*1000 : 10*60*1000;
+        for (let j = 0; j < solsN; j++) {
+            const label = solsN > 1 ? `Solution ${j+1}` : 'Solution';
+            items.push({ kind:'sol', idx:j, label, unlockAt: solAt + j*60*1000 });
+        }
+    }
+    return items;
+}
+function focusIsUnlocked(kind, idx) {
+    if (!focusState.on) return true;
+    if (focusState.unlockedExtra.has(`${kind}:${idx}`)) return true;
+    const item = focusSchedule(current).find(x => x.kind===kind && x.idx===idx);
+    if (!item) return true;
+    return focusElapsedMs() >= item.unlockAt;
+}
+function focusStart() {
+    focusState.on = true;
+    focusState.startedAt = Date.now();
+    focusState.pausedAt = 0;
+    focusState.accumulatedPausedMs = 0;
+    focusState.unlockedExtra = new Set();
+    if (!focusTickInterval) focusTickInterval = setInterval(focusTick, 1000);
+    updateFocusUI();
+    rerenderHintLocks();
+}
+function focusStop() {
+    focusState.on = false;
+    focusState.startedAt = 0;
+    focusState.pausedAt = 0;
+    focusState.accumulatedPausedMs = 0;
+    focusState.unlockedExtra = new Set();
+    if (focusTickInterval) { clearInterval(focusTickInterval); focusTickInterval = null; }
+    updateFocusUI();
+    rerenderHintLocks();
+}
+function focusResetTimer() {
+    focusState.startedAt = Date.now();
+    focusState.pausedAt = 0;
+    focusState.accumulatedPausedMs = 0;
+    focusState.unlockedExtra = new Set();
+}
+function focusReset() {
+    if (focusState.on) { focusResetTimer(); updateFocusUI(); rerenderHintLocks(); }
+}
+function focusPauseResume() {
+    if (!focusState.on) return;
+    if (focusState.pausedAt) {
+        focusState.accumulatedPausedMs += Date.now() - focusState.pausedAt;
+        focusState.pausedAt = 0;
+    } else {
+        focusState.pausedAt = Date.now();
+    }
+    updateFocusUI();
+}
+function focusPrimary() {
+    if (!focusState.on) focusStart();
+    else focusPauseResume();
+}
+function focusUnlockNow(kind, idx) {
+    if (!focusState.on) return;
+    focusState.unlockedExtra.add(`${kind}:${idx}`);
+    updateFocusUI();
+    rerenderHintLocks();
+}
+function focusTick() {
+    updateFocusUI();
+    rerenderHintLocks();
+}
+function toggleFocusPop() {
+    const pop = document.getElementById('focus-pop');
+    pop.classList.toggle('open');
+    if (pop.classList.contains('open')) updateFocusUI();
+}
+function updateFocusUI() {
+    const btn = document.getElementById('focus-btn');
+    const running = focusState.on && !focusState.pausedAt;
+    const paused  = focusState.on && !!focusState.pausedAt;
+    btn.classList.toggle('running', running);
+    btn.classList.toggle('paused',  paused);
+
+    const elapsed = focusElapsedMs();
+    document.getElementById('focus-time').textContent = focusFmt(elapsed);
+
+    const statusEl = document.getElementById('focus-status');
+    if (!focusState.on)    statusEl.innerHTML = 'Off';
+    else if (paused)       statusEl.innerHTML = '<span class="paused">Paused</span>';
+    else                   statusEl.innerHTML = '<span class="running">● Running</span>';
+
+    const sched = focusSchedule(current);
+    const next  = focusState.on
+        ? sched.find(x => !focusIsUnlocked(x.kind, x.idx))
+        : null;
+    const nextEl = document.getElementById('focus-next');
+    if (next) {
+        nextEl.style.display = 'flex';
+        nextEl.innerHTML = `<span>Next: ${next.label}</span><strong>${focusFmt(next.unlockAt - elapsed)}</strong>`;
+    } else if (focusState.on && sched.length) {
+        nextEl.style.display = 'flex';
+        nextEl.innerHTML = `<span>All unlocked</span><strong style="color:var(--green-dim)">✓</strong>`;
+    } else {
+        nextEl.style.display = 'none';
+    }
+
+    const primary = document.getElementById('focus-primary');
+    const stopBtn = document.getElementById('focus-stop');
+    if (!focusState.on) {
+        primary.textContent = 'Start';
+        primary.classList.add('primary');
+        stopBtn.style.display = 'none';
+    } else if (paused) {
+        primary.textContent = 'Resume';
+        primary.classList.add('primary');
+        stopBtn.style.display = '';
+    } else {
+        primary.textContent = 'Pause';
+        primary.classList.remove('primary');
+        stopBtn.style.display = '';
+    }
+
+    const tl = document.getElementById('focus-timeline');
+    if (!sched.length) {
+        tl.innerHTML = `<div style="font-size:12px;color:var(--text-faint);padding:6px 8px">No hints or solution for this problem.</div>`;
+    } else {
+        const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+        tl.innerHTML = sched.map(x => {
+            const unlocked = focusIsUnlocked(x.kind, x.idx);
+            const rem = Math.max(0, x.unlockAt - elapsed);
+            const right = unlocked
+                ? `<span class="right">UNLOCKED</span>`
+                : focusState.on
+                    ? `<span class="right">${focusFmt(rem)}<span class="unlock-now" onclick="focusUnlockNow('${x.kind}',${x.idx})">unlock</span></span>`
+                    : `<span class="right">${focusFmt(x.unlockAt)}</span>`;
+            return `<div class="focus-pop-tl-row${unlocked?' unlocked':''}"><span class="lbl">${unlocked?'':LOCK_SVG}${x.label}</span>${right}</div>`;
+        }).join('');
+    }
+}
+function rerenderHintLocks() {
+    if (!current) return;
+    const cards = document.querySelectorAll('#d-hints-sols .coll-card');
+    const elapsed = focusElapsedMs();
+    const sched = focusSchedule(current);
+    cards.forEach(card => {
+        const kind = card.dataset.kind;
+        const idx  = parseInt(card.dataset.idx, 10);
+        const unlocked = focusIsUnlocked(kind, idx);
+        const item = sched.find(x => x.kind===kind && x.idx===idx);
+        card.classList.toggle('locked', !unlocked);
+        const meta   = card.querySelector('.lock-meta');
+        const unBtn  = card.querySelector('.lock-unlock');
+        if (!unlocked && item) {
+            meta.style.display = '';
+            meta.textContent = focusFmt(Math.max(0, item.unlockAt - elapsed));
+            unBtn.style.display = '';
+            if (card.classList.contains('open')) card.classList.remove('open');
+        } else {
+            meta.style.display = 'none';
+            unBtn.style.display = 'none';
+        }
+    });
+}
+
+// Click outside the focus popover to dismiss
+document.addEventListener('click', (e) => {
+    const pop = document.getElementById('focus-pop');
+    if (!pop.classList.contains('open')) return;
+    if (e.target.closest('.focus-wrap')) return;
+    pop.classList.remove('open');
+});
 
 // ── Navigate ─────────────────────────────────────────────────
 const navigate = (dir) => {
@@ -1215,12 +1716,18 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'ArrowLeft'  || e.key === 'h') navigate(-1);
     if (e.key === 'ArrowRight' || e.key === 'l') navigate(1);
-    if (e.key === 'Escape') showList();
+    if (e.key === 'Escape') {
+        const pop = document.getElementById('focus-pop');
+        if (pop && pop.classList.contains('open')) { pop.classList.remove('open'); return; }
+        if (document.getElementById('notes-side').classList.contains('open')) { toggleNotesPane(); return; }
+        showList();
+    }
     if (e.key === 'Tab') {
         e.preventDefault();
-        const tabs = ['problem','solution','notes'];
-        switchTab(tabs[(tabs.indexOf(curTab) + 1) % 3]);
+        switchTab(curTab === 'problem' ? 'solution' : 'problem');
     }
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); toggleNotesPane(); }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFocusPop(); }
 });
 
 // ── Init ──────────────────────────────────────────────────────
