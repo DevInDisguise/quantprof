@@ -19,20 +19,20 @@
 <style>
 /* ── Reset ───────────────────────────────────────────────────── */
 :root {
-    --bg:        hsl(0,0%,8%);
-    --bg-card:   hsl(0,0%,10.5%);
-    --bg-muted:  hsl(0,0%,13%);
-    --bg-hover:  hsl(0,0%,11%);
-    --bg-accent: hsl(0,0%,18%);
-    --border:    hsl(0,0%,16%);
-    --border-soft: hsl(0,0%,13%);
-    --text:      hsl(0,0%,96%);
-    --text-dim:  hsl(0,0%,64%);
-    --text-faint:hsl(0,0%,40%);
-    --green:     hsl(142,71%,49%);
-    --green-dim: hsl(142,65%,62%);
-    --green-bg:  hsl(142,71%,49%/.12);
-    --green-bdr: hsl(142,71%,49%/.28);
+    --bg:        #16181c;
+    --bg-card:   #1a1d22;
+    --bg-muted:  #1e2128;
+    --bg-hover:  #1c1f25;
+    --bg-accent: #262a32;
+    --border:    #23272f;
+    --border-soft: #1e2128;
+    --text:      #ffffff;
+    --text-dim:  #a4abb6;
+    --text-faint:#6b7280;
+    --green:     #07fa0c;
+    --green-dim: #4dff52;
+    --green-bg:  rgba(7,250,12,.10);
+    --green-bdr: rgba(7,250,12,.28);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { min-height: 100%; }
@@ -136,14 +136,18 @@ img { display: block; }
     transition: background .1s;
 }
 .prob-table tbody tr:last-child { border-bottom: none; }
+.prob-table tbody tr { transition: background .15s; }
 .prob-table tbody tr:hover { background: var(--bg-hover); }
+.prob-table tbody tr:hover .td-num,
+.prob-table tbody tr:hover .td-title { color: var(--green); }
 .prob-table tbody td {
     padding: 20px 20px;
     vertical-align: middle;
+    transition: color .15s;
 }
 .td-num {
     width: 70px;
-    color: var(--text-faint);
+    color: #fff;
     font-size: 15px;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
@@ -151,7 +155,7 @@ img { display: block; }
 .td-title {
     font-size: 17px;
     font-weight: 600;
-    color: var(--text);
+    color: #fff;
 }
 .td-title.is-solved { color: var(--green-dim); }
 .td-status { text-align: center; width: 80px; }
