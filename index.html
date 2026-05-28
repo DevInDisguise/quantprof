@@ -208,8 +208,12 @@ img { display: block; }
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    transition: border-color .15s, transform .12s, color .15s;
 }
+.status-icon:hover { border-color: var(--text-faint); color: var(--text-faint); transform: scale(1.08); }
 .status-icon.done { border-color: var(--solved); color: var(--solved); }
+.status-icon.done:hover { border-color: var(--solved); color: var(--solved); opacity: .8; }
 .status-icon svg { width: 14px; height: 14px; }
 
 /* Pagination */
@@ -1285,6 +1289,20 @@ const renderList = () => {
                 icon.classList.toggle('saved', on);
                 icon.setAttribute('fill', on ? 'currentColor' : 'none');
                 document.getElementById('n-saved').textContent = savedQs.size;
+                return;
+            }
+            if (e.target.closest('.status-icon')) {
+                e.stopPropagation();
+                if (solved.has(p._id)) solved.delete(p._id); else solved.add(p._id);
+                saveSolved();
+                const on = solved.has(p._id);
+                const icon = e.target.closest('.status-icon');
+                icon.classList.toggle('done', on);
+                icon.innerHTML = on ? SVG_CHECK : '';
+                const titleEl = tr.querySelector('.td-title');
+                if (titleEl) titleEl.classList.toggle('is-solved', on);
+                document.getElementById('n-solved').textContent = solved.size;
+                if (statusFilter === 'unsolved' || statusFilter === 'saved') applyFilters();
                 return;
             }
             openProblem(p);
