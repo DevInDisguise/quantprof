@@ -19,20 +19,20 @@
 <style>
 /* ── Reset ───────────────────────────────────────────────────── */
 :root {
-    --bg:        hsl(220,13%,8%);
-    --bg-card:   hsl(220,13%,10%);
-    --bg-muted:  hsl(215,25%,12%);
-    --bg-hover:  hsl(220,13%,9%);
-    --bg-accent: hsl(215,25%,18%);
-    --border:    hsl(215,25%,15%);
-    --border-soft: hsl(215,25%,12%);
-    --text:      hsl(210,40%,98%);
-    --text-dim:  hsl(215,20%,65%);
-    --text-faint:hsl(215,20%,38%);
-    --green:     hsl(258,92%,68%);
-    --green-dim: hsl(258,75%,76%);
-    --green-bg:  hsl(258,92%,68%/.12);
-    --green-bdr: hsl(258,92%,68%/.25);
+    --bg:        hsl(0,0%,8%);
+    --bg-card:   hsl(0,0%,10.5%);
+    --bg-muted:  hsl(0,0%,13%);
+    --bg-hover:  hsl(0,0%,11%);
+    --bg-accent: hsl(0,0%,18%);
+    --border:    hsl(0,0%,16%);
+    --border-soft: hsl(0,0%,13%);
+    --text:      hsl(0,0%,96%);
+    --text-dim:  hsl(0,0%,64%);
+    --text-faint:hsl(0,0%,40%);
+    --green:     hsl(142,71%,49%);
+    --green-dim: hsl(142,65%,62%);
+    --green-bg:  hsl(142,71%,49%/.12);
+    --green-bdr: hsl(142,71%,49%/.28);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { min-height: 100%; }
@@ -394,7 +394,7 @@ img { display: block; }
     transition: all .15s;
 }
 .notes-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
-.notes-btn.active { color: hsl(258,92%,68%); border-color: hsl(258,92%,70%/.35); background: hsl(258,92%,68%/.06); }
+.notes-btn.active { color: hsl(142,71%,49%); border-color: hsl(142,71%,52%/.35); background: hsl(142,71%,49%/.06); }
 .notes-btn svg { width: 16px; height: 16px; }
 
 /* Saved count in table-meta */
@@ -414,26 +414,26 @@ img { display: block; }
     transition: all .15s;
 }
 .focus-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
-.focus-btn.running { color: hsl(258,92%,70%); border-color: hsl(258,92%,70%/.35); background: hsl(258,92%,68%/.06); }
+.focus-btn.running { color: hsl(142,71%,52%); border-color: hsl(142,71%,52%/.35); background: hsl(142,71%,49%/.06); }
 .focus-btn svg { width: 16px; height: 16px; }
 .focus-btn .pulse-dot {
     position: absolute;
     top: 5px; right: 5px;
     width: 7px; height: 7px;
     border-radius: 50%;
-    background: hsl(258,92%,70%);
+    background: hsl(142,71%,52%);
     display: none;
 }
 .focus-btn.running .pulse-dot {
     display: block;
-    box-shadow: 0 0 0 0 hsl(258,92%,70%/.7);
+    box-shadow: 0 0 0 0 hsl(142,71%,52%/.7);
     animation: focus-pulse 1.6s ease-out infinite;
 }
 .focus-btn.paused .pulse-dot { display: block; background: hsl(45,90%,58%); animation: none; }
 @keyframes focus-pulse {
-    0%   { box-shadow: 0 0 0 0   hsl(258,92%,70%/.7); }
-    70%  { box-shadow: 0 0 0 8px hsl(258,92%,70%/0); }
-    100% { box-shadow: 0 0 0 0   hsl(258,92%,70%/0); }
+    0%   { box-shadow: 0 0 0 0   hsl(142,71%,52%/.7); }
+    70%  { box-shadow: 0 0 0 8px hsl(142,71%,52%/0); }
+    100% { box-shadow: 0 0 0 0   hsl(142,71%,52%/0); }
 }
 
 .focus-pop {
@@ -470,7 +470,7 @@ img { display: block; }
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-.focus-pop-status .running { color: hsl(258,92%,72%); }
+.focus-pop-status .running { color: hsl(142,65%,62%); }
 .focus-pop-status .paused  { color: hsl(45,90%,60%); }
 .focus-pop-next {
     background: var(--bg-muted);
@@ -497,10 +497,10 @@ img { display: block; }
 }
 .focus-pop-actions button:hover { background: var(--bg-muted); color: var(--text); }
 .focus-pop-actions button.primary {
-    background: var(--green); color: hsl(220,13%,8%);
+    background: var(--green); color: hsl(0,0%,8%);
     border-color: var(--green); font-weight: 700;
 }
-.focus-pop-actions button.primary:hover { opacity: .9; background: var(--green); color: hsl(220,13%,8%); }
+.focus-pop-actions button.primary:hover { opacity: .9; background: var(--green); color: hsl(0,0%,8%); }
 .focus-pop-tl-title {
     font-size: 10.5px;
     text-transform: uppercase;
@@ -716,7 +716,7 @@ img { display: block; }
     gap: 8px;
     padding: 0 24px;
     background: var(--green);
-    color: hsl(220,13%,8%);
+    color: hsl(0,0%,8%);
     border-radius: 10px;
     font-size: 14px;
     font-weight: 700;
@@ -748,7 +748,7 @@ img { display: block; }
     transition: all .15s;
 }
 .mark-btn:hover { border-color: var(--green-dim); color: var(--green-dim); }
-.mark-btn.done { background: var(--green); border-color: var(--green); color: hsl(220,13%,8%); font-weight: 600; }
+.mark-btn.done { background: var(--green); border-color: var(--green); color: hsl(0,0%,8%); font-weight: 600; }
 
 /* Collapsible */
 .sol-section { display: flex; flex-direction: column; gap: 8px; }
@@ -854,11 +854,11 @@ img { display: block; }
 <nav class="navbar">
     <div class="nav-logo" onclick="showList()">
         <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="30" height="30" rx="6" fill="hsl(258,92%,68%/.12)"/>
-            <rect x="4" y="4" width="9" height="9" rx="2" fill="hsl(258,92%,68%)"/>
-            <rect x="17" y="4" width="9" height="9" rx="2" fill="hsl(258,92%,68%/.4)"/>
-            <rect x="4" y="17" width="9" height="9" rx="2" fill="hsl(258,92%,68%/.4)"/>
-            <rect x="17" y="17" width="9" height="9" rx="2" fill="hsl(258,92%,68%)"/>
+            <rect width="30" height="30" rx="6" fill="hsl(142,71%,49%/.12)"/>
+            <rect x="4" y="4" width="9" height="9" rx="2" fill="hsl(142,71%,49%)"/>
+            <rect x="17" y="4" width="9" height="9" rx="2" fill="hsl(142,71%,49%/.4)"/>
+            <rect x="4" y="17" width="9" height="9" rx="2" fill="hsl(142,71%,49%/.4)"/>
+            <rect x="17" y="17" width="9" height="9" rx="2" fill="hsl(142,71%,49%)"/>
         </svg>
         <span class="nav-logo-text">QuantDeck</span>
     </div>
@@ -1106,7 +1106,7 @@ function topicColor(t) {
 // Difficulty colour: green ≤3, amber 4-6, red ≥7
 function diffStyle(level) {
     const l = Number(level);
-    if (!l) return { bg:'rgba(100,100,120,.15)', fg:'hsl(215,20%,55%)', bdr:'rgba(100,100,120,.25)' };
+    if (!l) return { bg:'rgba(100,100,120,.15)', fg:'hsl(0,0%,55%)', bdr:'rgba(100,100,120,.25)' };
     if (l <= 3) return { bg:'rgba(34,197,94,.14)',  fg:'hsl(122,65%,58%)',  bdr:'rgba(34,197,94,.28)'  };
     if (l <= 6) return { bg:'rgba(234,179,8,.14)',  fg:'hsl(45,90%,58%)',   bdr:'rgba(234,179,8,.28)'  };
     return             { bg:'rgba(239,68,68,.14)',   fg:'hsl(0,82%,63%)',    bdr:'rgba(239,68,68,.28)'  };
