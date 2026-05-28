@@ -19,20 +19,26 @@
 <style>
 /* ── Reset ───────────────────────────────────────────────────── */
 :root {
-    --bg:        #16181c;
-    --bg-card:   #1a1d22;
-    --bg-muted:  #1e2128;
-    --bg-hover:  #1c1f25;
-    --bg-accent: #262a32;
-    --border:    #23272f;
-    --border-soft: #1e2128;
-    --text:      #ffffff;
-    --text-dim:  #a4abb6;
-    --text-faint:#6b7280;
-    --green:     #07fa0c;
-    --green-dim: #4dff52;
-    --green-bg:  rgba(7,250,12,.10);
-    --green-bdr: rgba(7,250,12,.28);
+    /* quantprof.org exact tokens */
+    --bg:          hsl(220 13% 8%);
+    --bg-card:     hsl(220 13% 10%);
+    --bg-muted:    hsl(215 25% 12%);
+    --bg-hover:    hsl(220 13% 9.5%);
+    --bg-accent:   hsl(215 25% 18%);
+    --border:      hsl(215 25% 15%);
+    --border-soft: hsl(215 25% 12%);
+    --text:        hsl(210 40% 98%);
+    --text-dim:    hsl(215 20% 65%);
+    --text-faint:  hsl(215 20% 38%);
+    /* Primary neon green — Submit button, hover, focus-active */
+    --green:       hsl(122 97% 50%);          /* #04fb0c */
+    --green-dim:   hsl(122 97% 60%);
+    --green-bg:    hsl(122 97% 50% / .10);
+    --green-bdr:   hsl(122 97% 50% / .28);
+    /* Solved / Completed — softer green, distinct from primary */
+    --solved:      #22c55e;
+    --solved-bg:   rgba(34,197,94,.12);
+    --solved-bdr:  rgba(34,197,94,.28);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { min-height: 100%; }
@@ -104,7 +110,7 @@ img { display: block; }
     font-size: 15px;
     color: var(--text-faint);
 }
-.table-meta .solved-ct { color: var(--green-dim); font-weight: 600; }
+.table-meta .solved-ct { color: var(--solved); font-weight: 600; }
 
 /* Table wrapper — rounded border card */
 .table-wrap {
@@ -157,7 +163,7 @@ img { display: block; }
     font-weight: 600;
     color: #fff;
 }
-.td-title.is-solved { color: var(--green-dim); }
+.td-title.is-solved { color: #fff; }
 .td-status { text-align: center; width: 80px; }
 
 /* Topic pill */
@@ -203,7 +209,7 @@ img { display: block; }
     align-items: center;
     justify-content: center;
 }
-.status-icon.done { border-color: var(--green-dim); color: var(--green-dim); }
+.status-icon.done { border-color: var(--solved); color: var(--solved); }
 .status-icon svg { width: 14px; height: 14px; }
 
 /* Pagination */
@@ -587,17 +593,26 @@ img { display: block; }
     flex-wrap: wrap;
     row-gap: 10px;
 }
+/* Layout: Completed (left) | Back (center) | Nav (right) */
+.detail-bar-left,
+.detail-bar-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+.detail-bar-right { justify-content: flex-end; gap: 8px; }
 .completed-tag {
     display: none;
     align-items: center;
     gap: 6px;
     font-size: 14px;
     font-weight: 500;
-    color: var(--green-dim);
+    color: var(--solved);
 }
 .completed-tag svg { width: 18px; height: 18px; }
 .back-btn {
-    padding: 8px 18px;
+    padding: 9px 20px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -608,22 +623,24 @@ img { display: block; }
     transition: background .15s;
 }
 .back-btn:hover { background: var(--bg-muted); }
-.nav-btns { display: flex; align-items: center; gap: 2px; margin-left: auto; }
 .nav-btn {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 7px 12px;
-    border-radius: 7px;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     font-size: 14px;
-    color: var(--text-dim);
+    font-weight: 500;
+    color: var(--text-faint);
     cursor: pointer;
-    transition: color .15s, background .15s;
+    transition: color .15s, background .15s, border-color .15s;
     white-space: nowrap;
 }
-.nav-btn:hover { color: var(--text); background: var(--bg-card); }
-.nav-btn:disabled { opacity: .3; pointer-events: none; }
-.nav-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.nav-btn:hover { color: var(--text); border-color: var(--text-faint); background: var(--bg-card); }
+.nav-btn:disabled { opacity: .35; pointer-events: none; }
+.nav-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 /* Content */
 .detail-content {
@@ -681,6 +698,27 @@ img { display: block; }
 }
 .share-btn:hover { color: var(--text-dim); border-color: var(--bg-accent); }
 .share-btn svg { width: 15px; height: 15px; }
+
+/* Asked-in inline (detail tab row) */
+.asked-in-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 4px;
+}
+.asked-in-lbl {
+    font-size: 13px;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+.asked-in-logos { display: flex; align-items: center; gap: 5px; }
+.asked-in-logos img {
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    object-fit: cover;
+    background: #fff;
+    flex-shrink: 0;
+}
 
 /* Problem */
 .prob-title {
@@ -922,15 +960,17 @@ img { display: block; }
 <!-- ── DETAIL VIEW ───────────────────────────────────────────── -->
 <div id="detail-view">
     <div class="detail-bar">
-        <div class="completed-tag" id="completed-tag">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M8 12l3 3 5-5"/>
-            </svg>
-            Completed
+        <div class="detail-bar-left">
+            <div class="completed-tag" id="completed-tag">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 12l3 3 5-5"/>
+                </svg>
+                Completed
+            </div>
         </div>
-        <button class="back-btn" onclick="showList()">Back to Problems</button>
-        <div class="nav-btns">
+        <div class="detail-bar-right">
+            <button class="back-btn" onclick="showList()">Back to Problems</button>
             <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
                 Previous
@@ -951,6 +991,10 @@ img { display: block; }
             </div>
             <div class="tab-right">
                 <span class="level-pill" id="level-pill"></span>
+                <div class="asked-in-row" id="asked-in-row" style="display:none">
+                    <span class="asked-in-lbl">Asked in:</span>
+                    <div class="asked-in-logos" id="asked-in-logos"></div>
+                </div>
                 <div class="focus-wrap">
                     <button class="focus-btn" id="focus-btn" title="Focus mode" onclick="event.stopPropagation();toggleFocusPop()">
                         <span class="pulse-dot"></span>
@@ -1318,9 +1362,27 @@ const renderDetail = () => {
     document.getElementById('prev-btn').disabled = idx <= 0;
     document.getElementById('next-btn').disabled = idx >= filtered.length - 1;
 
-    document.getElementById('level-pill').textContent = `Lvl ${p.level || '?'}/10`;
+    const lp = document.getElementById('level-pill');
+    lp.textContent = `Lvl ${p.level || '?'}/10`;
+    const dc = diffStyle(p.level);
+    lp.style.background   = dc.bg;
+    lp.style.color        = dc.fg;
+    lp.style.borderColor  = dc.bdr;
     document.getElementById('d-title').textContent = p.title || 'Untitled';
     document.getElementById('d-question').innerHTML = rich(p.question);
+
+    // Asked-in (companies)
+    const askedRow   = document.getElementById('asked-in-row');
+    const askedLogos = document.getElementById('asked-in-logos');
+    const dLogos     = (p.askedIn || []).filter(c => c.logoURL).slice(0, 5);
+    if (dLogos.length) {
+        askedLogos.innerHTML = dLogos.map(c =>
+            `<img src="${esc(c.logoURL)}" alt="${esc(c.name||'')}" onerror="this.style.display='none'">`
+        ).join('');
+        askedRow.style.display = 'flex';
+    } else {
+        askedRow.style.display = 'none';
+    }
 
     // Answer
     const ansEl = document.getElementById('d-answer');
@@ -1337,12 +1399,10 @@ const renderDetail = () => {
                     Submit
                 </button>
             </div>
-            <div class="ans-feedback" id="ans-fb"></div>
-            <button class="mark-btn${isSolved?' done':''}" id="mark-btn">${isSolved?'✓ Solved':'Mark as solved'}</button>`;
+            <div class="ans-feedback" id="ans-fb"></div>`;
 
         const inp  = document.getElementById('ans-in');
         const fb   = document.getElementById('ans-fb');
-        const mark = document.getElementById('mark-btn');
 
         const check = () => {
             const u = inp.value.trim().toLowerCase();
@@ -1353,24 +1413,12 @@ const renderDetail = () => {
             fb.textContent = ok ? '✓ Correct!' : '✗ Not quite — try again';
             if (ok && !solved.has(p._id)) {
                 solved.add(p._id); saveSolved();
-                mark.textContent = '✓ Solved'; mark.classList.add('done');
                 document.getElementById('completed-tag').style.display = 'flex';
+                if (typeof renderList === 'function') renderList();
             }
         };
         document.getElementById('ans-sub').addEventListener('click', check);
         inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
-        mark.addEventListener('click', () => {
-            if (solved.has(p._id)) {
-                solved.delete(p._id);
-                mark.textContent = 'Mark as solved'; mark.classList.remove('done');
-                document.getElementById('completed-tag').style.display = 'none';
-            } else {
-                solved.add(p._id);
-                mark.textContent = '✓ Solved'; mark.classList.add('done');
-                document.getElementById('completed-tag').style.display = 'flex';
-            }
-            saveSolved();
-        });
     }
 
     // Hints & solutions
