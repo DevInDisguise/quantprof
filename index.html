@@ -112,6 +112,77 @@ img { display: block; }
 }
 .table-meta .solved-ct { color: var(--solved); font-weight: 600; }
 
+/* Daily counter */
+.table-meta .today-ct {
+    color: #fbbf24;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(251,191,36,.28);
+    background: rgba(251,191,36,.10);
+    transition: background .15s, border-color .15s;
+}
+.table-meta .today-ct:hover { background: rgba(251,191,36,.18); border-color: rgba(251,191,36,.5); }
+.daily-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 50;
+    width: 280px;
+    padding: 16px;
+    background: var(--card, #16161e);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.45);
+    cursor: default;
+    display: none;
+}
+.daily-panel.open { display: block; }
+.daily-panel h4 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    color: var(--text, #e8e8f0);
+    font-weight: 700;
+}
+.daily-panel .dp-sub {
+    margin: 0 0 14px;
+    font-size: 12px;
+    color: var(--text-faint);
+    font-weight: 500;
+}
+.daily-panel .dp-streak {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+.daily-panel .dp-stat {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.04);
+}
+.daily-panel .dp-stat b { display: block; font-size: 20px; color: #fbbf24; }
+.daily-panel .dp-stat span { font-size: 11px; color: var(--text-faint); }
+.daily-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+    font-size: 12px;
+}
+.daily-row .dr-day { width: 56px; color: var(--text-faint); flex-shrink: 0; }
+.daily-row .dr-bar-wrap { flex: 1; height: 10px; background: rgba(255,255,255,.06); border-radius: 5px; overflow: hidden; }
+.daily-row .dr-bar { height: 100%; background: linear-gradient(90deg,#f59e0b,#fbbf24); border-radius: 5px; min-width: 2px; }
+.daily-row.is-today .dr-day { color: #fbbf24; font-weight: 700; }
+.daily-row .dr-n { width: 16px; text-align: right; color: var(--text, #e8e8f0); flex-shrink: 0; }
+
 /* Table wrapper — rounded border card */
 .table-wrap {
     border: 1px solid var(--border);
@@ -935,9 +1006,12 @@ img { display: block; }
 
     <div class="table-meta">
         <span id="n-shown">0 problems</span>
-        <span style="display:flex;gap:16px">
+        <span style="display:flex;gap:16px;align-items:center">
             <span class="saved-ct"><span id="n-saved">0</span> saved</span>
             <span class="solved-ct"><span id="n-solved">0</span> solved</span>
+            <span class="today-ct" id="today-toggle" title="Your daily solving progress">🔥 <span id="n-today">0</span> today
+                <div class="daily-panel" id="daily-panel"></div>
+            </span>
         </span>
     </div>
 
@@ -1133,6 +1207,120 @@ async function saveNotes() {
     } catch(e) {}
 }
 
+// ── Daily solve log: { 'YYYY-MM-DD': [problemIds] } ──────────
+const DAILY_KEY  = 'qp_daily_v1';
+const KVDB_DAILY = 'https://kvdb.io/H7DNRwdvP9eg1wQJFyYWk9/daily';
+const dailyLog   = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
+
+const todayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+
+async function saveDaily() {
+    localStorage.setItem(DAILY_KEY, JSON.stringify(dailyLog));
+    try {
+        await fetch(KVDB_DAILY, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dailyLog)
+        });
+    } catch(e) {}
+}
+
+function logSolveToday(id) {
+    const t = todayKey();
+    if (!dailyLog[t]) dailyLog[t] = [];
+    if (!dailyLog[t].includes(id)) { dailyLog[t].push(id); saveDaily(); }
+    updateTodayCount();
+}
+
+function unlogSolveToday(id) {
+    const t = todayKey();
+    if (dailyLog[t] && dailyLog[t].includes(id)) {
+        dailyLog[t] = dailyLog[t].filter(x => x !== id);
+        saveDaily();
+    }
+    updateTodayCount();
+}
+
+function updateTodayCount() {
+    const el = document.getElementById('n-today');
+    if (el) el.textContent = (dailyLog[todayKey()] || []).length;
+    const panel = document.getElementById('daily-panel');
+    if (panel && panel.classList.contains('open')) renderDailyPanel();
+}
+
+function dateKeyOffset(offset) {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function computeStreak() {
+    let streak = 0;
+    // streak counts consecutive days with >=1 solve; today counts if non-empty,
+    // otherwise streak can still be alive from yesterday backwards
+    let i = (dailyLog[todayKey()] || []).length > 0 ? 0 : 1;
+    for (; ; i++) {
+        const n = (dailyLog[dateKeyOffset(i)] || []).length;
+        if (n > 0) streak++;
+        else break;
+    }
+    return streak;
+}
+
+function renderDailyPanel() {
+    const panel = document.getElementById('daily-panel');
+    if (!panel) return;
+
+    const todayN  = (dailyLog[todayKey()] || []).length;
+    const streak  = computeStreak();
+    const best    = Math.max(0, ...Object.values(dailyLog).map(a => (a || []).length));
+
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+        const key = dateKeyOffset(i);
+        const n   = (dailyLog[key] || []).length;
+        const d   = new Date();
+        d.setDate(d.getDate() - i);
+        const lbl = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+        days.push({ lbl, n, isToday: i === 0 });
+    }
+    const maxN = Math.max(1, ...days.map(d => d.n));
+
+    panel.innerHTML = `
+        <h4>Daily progress</h4>
+        <p class="dp-sub">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+        <div class="dp-streak">
+            <div class="dp-stat"><b>${todayN}</b><span>today</span></div>
+            <div class="dp-stat"><b>${streak}🔥</b><span>day streak</span></div>
+            <div class="dp-stat"><b>${best}</b><span>best day</span></div>
+        </div>
+        ${days.map(d => `
+            <div class="daily-row${d.isToday ? ' is-today' : ''}">
+                <span class="dr-day">${d.lbl}</span>
+                <span class="dr-bar-wrap"><span class="dr-bar" style="width:${Math.round(d.n / maxN * 100)}%"></span></span>
+                <span class="dr-n">${d.n}</span>
+            </div>`).join('')}
+    `;
+}
+
+// Panel open/close
+document.getElementById('today-toggle').addEventListener('click', (e) => {
+    if (e.target.closest('.daily-panel')) return; // clicks inside panel don't toggle
+    const panel = document.getElementById('daily-panel');
+    const opening = !panel.classList.contains('open');
+    panel.classList.toggle('open', opening);
+    if (opening) renderDailyPanel();
+});
+document.addEventListener('click', (e) => {
+    const panel = document.getElementById('daily-panel');
+    if (panel.classList.contains('open') && !e.target.closest('#today-toggle')) {
+        panel.classList.remove('open');
+    }
+});
+
 // ── Topic colours ─────────────────────────────────────────────
 const TOPIC_COLORS = {
     'probability':    { bg:'rgba(109,40,217,.22)',  fg:'#a78bfa' },
@@ -1293,9 +1481,11 @@ const renderList = () => {
             }
             if (e.target.closest('.status-icon')) {
                 e.stopPropagation();
-                if (solved.has(p._id)) solved.delete(p._id); else solved.add(p._id);
+                if (solved.has(p._id)) { solved.delete(p._id); unlogSolveToday(p._id); }
+                else { solved.add(p._id); logSolveToday(p._id); }
                 saveSolved();
                 const on = solved.has(p._id);
+                if (on) logSolveToday(p._id); else unlogSolveToday(p._id);
                 const icon = e.target.closest('.status-icon');
                 icon.classList.toggle('done', on);
                 icon.innerHTML = on ? SVG_CHECK : '';
@@ -1431,6 +1621,7 @@ const renderDetail = () => {
             fb.textContent = ok ? '✓ Correct!' : '✗ Not quite — try again';
             if (ok && !solved.has(p._id)) {
                 solved.add(p._id); saveSolved();
+                logSolveToday(p._id);
                 document.getElementById('completed-tag').style.display = 'flex';
                 if (typeof renderList === 'function') renderList();
             }
@@ -1802,6 +1993,7 @@ document.addEventListener('keydown', e => {
 
 // ── Init ──────────────────────────────────────────────────────
 applyFilters();
+updateTodayCount();
 
 // ── Cloud sync on load: bidirectional merge ─────────────────
 (async () => {
@@ -1858,12 +2050,43 @@ applyFilters();
         } catch(e) { return false; }
     }
 
-    const [solvedChanged, savedChanged] = await Promise.all([
+    async function syncDaily() {
+        try {
+            const r = await fetch(KVDB_DAILY);
+            let remote = {};
+            if (r.ok) {
+                const data = await r.json();
+                if (data && typeof data === 'object' && !Array.isArray(data)) remote = data;
+            }
+            let changed = false;
+            for (const [day, ids] of Object.entries(remote)) {
+                const merged = new Set(dailyLog[day] || []);
+                const before = merged.size;
+                (ids || []).forEach(id => merged.add(id));
+                if (!dailyLog[day] || merged.size !== before) { dailyLog[day] = [...merged]; changed = true; }
+            }
+            const needsPush = Object.keys(dailyLog).some(day =>
+                !remote[day] || dailyLog[day].some(id => !(remote[day] || []).includes(id)));
+            if (changed) localStorage.setItem(DAILY_KEY, JSON.stringify(dailyLog));
+            if (needsPush) {
+                await fetch(KVDB_DAILY, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dailyLog)
+                });
+            }
+            return changed;
+        } catch(e) { return false; }
+    }
+
+    const [solvedChanged, savedChanged, , dailyChanged] = await Promise.all([
         syncSet(solved, SOLVED_KEY, KVDB_URL),
         syncSet(savedQs, SAVED_KEY, KVDB_SAVED),
-        syncObj(allNotes, NOTES_KEY, KVDB_NOTES)
+        syncObj(allNotes, NOTES_KEY, KVDB_NOTES),
+        syncDaily()
     ]);
     if (solvedChanged || savedChanged) renderList();
+    if (dailyChanged) updateTodayCount();
 })();
 </script>
 </body>
