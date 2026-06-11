@@ -113,7 +113,7 @@ img { display: block; }
 .table-meta .solved-ct { color: var(--solved); font-weight: 600; }
 
 /* Daily counter */
-.table-meta .today-ct {
+.today-ct {
     color: #fbbf24;
     font-weight: 600;
     cursor: pointer;
@@ -127,8 +127,9 @@ img { display: block; }
     border: 1px solid rgba(251,191,36,.28);
     background: rgba(251,191,36,.10);
     transition: background .15s, border-color .15s;
+    font-size: 15px;
 }
-.table-meta .today-ct:hover { background: rgba(251,191,36,.18); border-color: rgba(251,191,36,.5); }
+.today-ct:hover { background: rgba(251,191,36,.18); border-color: rgba(251,191,36,.5); }
 .daily-panel {
     position: absolute;
     top: calc(100% + 8px);
@@ -144,6 +145,8 @@ img { display: block; }
     display: none;
 }
 .daily-panel.open { display: block; }
+/* Detail-bar badge sits on the left, so drop its panel down-right */
+#detail-view .daily-panel { left: 0; right: auto; }
 .daily-panel h4 {
     margin: 0 0 4px;
     font-size: 14px;
@@ -675,6 +678,7 @@ img { display: block; }
     display: flex;
     align-items: center;
     min-width: 0;
+    gap: 14px;
 }
 .detail-bar-right { justify-content: flex-end; gap: 8px; }
 .completed-tag {
@@ -1009,7 +1013,7 @@ img { display: block; }
         <span style="display:flex;gap:16px;align-items:center">
             <span class="saved-ct"><span id="n-saved">0</span> saved</span>
             <span class="solved-ct"><span id="n-solved">0</span> solved</span>
-            <span class="today-ct" id="today-toggle" title="Your daily solving progress">🔥 <span id="n-today">0</span> today
+            <span class="today-ct" id="today-toggle" title="Your daily solving progress">🔥 <span class="n-today" id="n-today">0</span> today
                 <div class="daily-panel" id="daily-panel"></div>
             </span>
         </span>
@@ -1046,6 +1050,9 @@ img { display: block; }
                 </svg>
                 Completed
             </div>
+            <span class="today-ct" title="Your daily solving progress">🔥 <span class="n-today">0</span> today
+                <div class="daily-panel"></div>
+            </span>
         </div>
         <div class="detail-bar-right">
             <button class="back-btn" onclick="showList()">Back to Problems</button>
@@ -1245,10 +1252,9 @@ function unlogSolveToday(id) {
 }
 
 function updateTodayCount() {
-    const el = document.getElementById('n-today');
-    if (el) el.textContent = (dailyLog[todayKey()] || []).length;
-    const panel = document.getElementById('daily-panel');
-    if (panel && panel.classList.contains('open')) renderDailyPanel();
+    const n = (dailyLog[todayKey()] || []).length;
+    document.querySelectorAll('.n-today').forEach(el => el.textContent = n);
+    if (document.querySelector('.daily-panel.open')) renderDailyPanel();
 }
 
 function dateKeyOffset(offset) {
@@ -1271,8 +1277,8 @@ function computeStreak() {
 }
 
 function renderDailyPanel() {
-    const panel = document.getElementById('daily-panel');
-    if (!panel) return;
+    const panels = document.querySelectorAll('.daily-panel');
+    if (!panels.length) return;
 
     const todayN  = (dailyLog[todayKey()] || []).length;
     const streak  = computeStreak();
@@ -1289,7 +1295,7 @@ function renderDailyPanel() {
     }
     const maxN = Math.max(1, ...days.map(d => d.n));
 
-    panel.innerHTML = `
+    const html = `
         <h4>Daily progress</h4>
         <p class="dp-sub">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
         <div class="dp-streak">
@@ -1304,20 +1310,22 @@ function renderDailyPanel() {
                 <span class="dr-n">${d.n}</span>
             </div>`).join('')}
     `;
+    panels.forEach(p => p.innerHTML = html);
 }
 
-// Panel open/close
-document.getElementById('today-toggle').addEventListener('click', (e) => {
-    if (e.target.closest('.daily-panel')) return; // clicks inside panel don't toggle
-    const panel = document.getElementById('daily-panel');
-    const opening = !panel.classList.contains('open');
-    panel.classList.toggle('open', opening);
-    if (opening) renderDailyPanel();
-});
+// Panel open/close — delegated so every .today-ct badge (list + detail) works
 document.addEventListener('click', (e) => {
-    const panel = document.getElementById('daily-panel');
-    if (panel.classList.contains('open') && !e.target.closest('#today-toggle')) {
-        panel.classList.remove('open');
+    const toggle = e.target.closest('.today-ct');
+    if (toggle && !e.target.closest('.daily-panel')) {
+        const panel = toggle.querySelector('.daily-panel');
+        const opening = !panel.classList.contains('open');
+        document.querySelectorAll('.daily-panel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); });
+        panel.classList.toggle('open', opening);
+        if (opening) renderDailyPanel();
+        return;
+    }
+    if (!e.target.closest('.daily-panel')) {
+        document.querySelectorAll('.daily-panel.open').forEach(p => p.classList.remove('open'));
     }
 });
 
