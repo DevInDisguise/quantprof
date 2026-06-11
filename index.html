@@ -1485,7 +1485,6 @@ const renderList = () => {
                 else { solved.add(p._id); logSolveToday(p._id); }
                 saveSolved();
                 const on = solved.has(p._id);
-                if (on) logSolveToday(p._id); else unlogSolveToday(p._id);
                 const icon = e.target.closest('.status-icon');
                 icon.classList.toggle('done', on);
                 icon.innerHTML = on ? SVG_CHECK : '';
